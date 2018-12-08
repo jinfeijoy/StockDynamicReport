@@ -1,4 +1,4 @@
-##This is a test
+#This is a test
 
 Code blocks must be indented by 4 whitespaces.
 Python-Markdown has a auto-guess function which works
