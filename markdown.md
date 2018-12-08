@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Dec  7 22:44:09 2018
-
-@author: Jinfei Li
-"""
 ##This is a test
 
 Code blocks must be indented by 4 whitespaces.
