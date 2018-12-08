@@ -1,6 +1,7 @@
 # This is a tutorial
 
 Reference link: https://alexwlchan.net/2017/03/extensions-in-python-markdown/ 
+Markdown Guide: https://guides.github.com/features/mastering-markdown/
 
 Code blocks must be indented by 4 whitespaces.
 Python-Markdown has a auto-guess function which works
