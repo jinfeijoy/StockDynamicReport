@@ -1,4 +1,6 @@
-# This is a test
+# This is a tutorial
+
+Reference link: https://alexwlchan.net/2017/03/extensions-in-python-markdown/ 
 
 Code blocks must be indented by 4 whitespaces.
 Python-Markdown has a auto-guess function which works
@@ -31,6 +33,14 @@ draw the reader's attention:
 This is a GFM fenced code block:
 
 ```python
+def hello_world(name):
+    """Prints a friendly greeting."""
+    print('Hello %s!' % name)
+```
+
+This GFM fenced code block would have line numbers:
+
+```python linenums
 def hello_world(name):
     """Prints a friendly greeting."""
     print('Hello %s!' % name)
