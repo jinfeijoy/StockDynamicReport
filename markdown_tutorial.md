@@ -14,7 +14,7 @@ programming language we use, we can also add the language-tag
 explicitly. One way to do this would be:
 
 
-    :::python
+    #!python
     print("Hello, World")
 
 or we can highlight certain lines to
@@ -27,3 +27,11 @@ draw the reader's attention:
     for letter in "this is a test":
     print(letter)
     # I want to be highlighted, too!
+
+This is a GFM fenced code block:
+
+```python
+def hello_world(name):
+    """Prints a friendly greeting."""
+    print('Hello %s!' % name)
+```
