@@ -46,7 +46,7 @@ import locale
 locale.setlocale( locale.LC_ALL, '' ) #this used to format currency
 
 
-# In[2]:
+# In[108]:
 
 
 def get_stock_details(tickers, startdate, enddate):
@@ -74,13 +74,32 @@ def plot_pie_chart_dist(data, group_by_feature, dist_feature):
     plt.title(dist_feature + ' distribution by different ' + group_by_feature)
     plt.show()
 
-
-def get_etf_holding(ticker):
+    
+def get_etf_holding(ticker, price_period = '2y'):
     t = Ticker(ticker)
+    hist_price = t.history(period=price_period, interval='1d')
+    hist_price = hist_price.reset_index()
+    price = pd.melt(hist_price, id_vars=['date'], value_vars=['open', 'high', 'close', 'low', 'adjclose'])
+    fig = px.line(price, x='date', y='value', color='variable',
+                 title=ticker+' Historical Price')
+    fig.show()
+    fig = px.line(hist_price, x='date', y='volume', 
+                 title=ticker+' Volume')
+    fig.show()
     print('===============================',ticker,'=================================')
     print()
+    print('-------------------------- Summary Details ----------------------------')
+    smr_details = pd.DataFrame(t.summary_detail[ticker], index=[0]).T.set_axis(['Value'], axis=1, inplace=False)
+    keep_cols = ['totalAssets', 'previousClose', 'open', 'fiftyDayAverage','fiftyDayAverage',
+             'fiftyTwoWeekLow', 'fiftyTwoWeekHigh', 'twoHundredDayAverage',
+             'volume','averageVolume', 'averageVolume10days','averageDailyVolume10Day']
+    smr_details = smr_details[smr_details.index.isin(keep_cols)]
+    smr_details = smr_details.reindex(keep_cols)
+    print(smr_details)
     print('-------------------------- Key Factor ----------------------------')
-    print(pd.DataFrame(t.key_stats[ticker], index=[0]).T.set_axis(['Value'], axis=1, inplace=False))
+    key_factor = pd.DataFrame(t.key_stats[ticker], index=[0]).T.set_axis(['Value'], axis=1, inplace=False)
+    key_factor = key_factor[key_factor.index.isin(['category','ytdReturn','fundFamily', 'fundInceptionDate', 'legalType'])]
+    print(key_factor)
     print('-------------------------- Fund Sector ----------------------------')
     fund_sector = t.fund_sector_weightings
     if len(fund_sector) >1:
@@ -103,6 +122,7 @@ def get_etf_holding(ticker):
     if type(t.fund_performance[ticker]) != str:
         print(pd.DataFrame(t.fund_performance[ticker]['riskOverviewStatistics']['riskStatistics']))
     print('=========================================================================')
+                           
 
 
 # In[3]:
@@ -248,7 +268,7 @@ alt.Chart(hold_stock_detail[hold_stock_detail.ticker!='SPCE']).mark_line().encod
 
 # ## Watch List
 
-# In[10]:
+# In[6]:
 
 
 watchlist = pd.read_excel(os.path.join(path,file), sheet_name = 'watchlist')
@@ -268,13 +288,25 @@ alt.Chart(watchlist_df).mark_line().encode(x='date',y='volume', color = 'ticker:
 watchlist["ticker"].unique()
 
 
-# In[13]:
+# In[93]:
+
+
+
+
+
+# In[109]:
+
+
+get_etf_holding('AWAY', '6mo')
+
+
+# In[110]:
 
 
 get_etf_holding('JETS')
 
 
-# In[14]:
+# In[111]:
 
 
 get_etf_holding('0P00016N6T.TO')
