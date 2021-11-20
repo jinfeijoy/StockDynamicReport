@@ -1,0 +1,54 @@
+---
+title: "HPI Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Teranet House Price Index
+
+The data is obtained from <https://housepriceindex.ca/>.
+
+
+```{r data, echo=FALSE, include = FALSE, messsage = FALSE,  warning = FALSE}
+library(DT)
+library(crosstalk)
+library(data.table)
+library(lubridate)
+library(zoo)
+library(dplyr)
+require(plyr)
+setwd("C:/Users/luoyan011/Desktop/PersonalLearning/GitHub/NLP_data")
+data = fread('House_Price_Index.csv')
+
+data$date = as.Date(as.yearmon(data$date, "%b-%y"))
+data = data %>%
+  filter(date >= as.Date('2000-01-01'))
+data$region <- mapvalues(data$region, 
+                         from=c( "c11" ,"bc_victoria" ,"bc_vancouver","ab_calgary","ab_edmonton" ,
+                                 "mb_winnipeg" ,"on_hamilton","on_toronto","on_ottawa","qc_montreal", 
+                                 "qc_quebec_city", "ns_halifax"  ), 
+                         to=c("c11", "Victoria","Vancouver","Calgary","Edmonton",
+                              "Winnipeg","Hamilton","Toronto","Ottawa","Montreal","Quebec","Halifax"))
+
+colnames(data) = c('Date','HPI','Sales Count','Region')
+```
+
+
+
+```{r datatable, echo=FALSE}
+shared_data <- SharedData$new(data, key = ~Region, group = "shared_obj")
+
+# send the group to the filtering selection box
+filter_select(
+  id = "id-selector", label = "Region",
+  sharedData = shared_data, group = ~Region
+)
+
+
+
+datatable(shared_data, rownames = FALSE, options = list(pageLength = 10))
+```
