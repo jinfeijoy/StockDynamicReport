@@ -1,0 +1,88 @@
+---
+title: "Covid Hospital Rate Map"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Reference: https://rstudio-pubs-static.s3.amazonaws.com/78408_46f613724ce44d9691c7ac88529e899c.html
+```
+
+## R Markdown
+
+
+```{r data, echo=FALSE, include = FALSE, messsage = FALSE,  warning = FALSE}
+library(DT)
+library(crosstalk)
+library(data.table)
+library(lubridate)
+library(zoo)
+library(dplyr)
+library(rgdal)
+library(leaflet)
+library(cetcolor)
+library(rgeos)
+setwd("C:/Users/luoyan011/Desktop/PersonalLearning/GitHub/NLP_data/gfsa000b11a_e")
+data = fread('covid_cases_toronto.csv')
+
+colnames(data) <- c('id', 'outbreak_associated', 'age_group', 'neighborhood', 'fsa', 
+                    'infection_source', 'classification', 'episode_date',
+                    'reported_date', 'gender', 'outcome', 'hospitalized', 'ICU', 
+                    'intubated', 'ever_hospitalized', 'ever_ICU', 'ever_intubated')
+
+data$episode_date = as.Date(data$episode_date, "%Y-%m-%d")
+data$reported_date = as.Date(data$reported_date, "%Y-%m-%d")
+data$reported_month = as.Date(as.yearmon(data$reported_date, "%Y-%m-%d"))
+data = data %>%
+  mutate(classification  = case_when(classification =='CONFIRMED'~1,TRUE~0),
+         ever_hospitalized = case_when(ever_hospitalized =='Yes'~1,TRUE~0),
+         ever_ICU = case_when(ever_ICU =='Yes'~1,TRUE~0),
+         ever_intubated = case_when(ever_intubated =='Yes'~1,TRUE~0)
+         )
+
+
+covid_count = data %>% group_by(fsa, reported_month) %>%
+  summarize( n = n(),
+             hospital_rate = mean(ever_hospitalized) * 100,
+             icu_rate = mean(ever_ICU)* 100,
+             intubated_rate = mean(ever_intubated)* 100)
+
+area_all = readOGR(dsn = getwd(), layer = "gfsa000b11a_e", verbose = FALSE, stringsAsFactors = FALSE)
+area_all = spTransform(area_all, CRS('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'))
+
+all_fsa = as.vector(data$fsa)
+count = area_all[area_all$CFSAUID %in% all_fsa,]
+
+covid_count_data = raster::aggregate(count, 'CFSAUID')
+covid_count_data@data = left_join(covid_count_data@data, covid_count, by = c('CFSAUID'='fsa'))
+
+hos_change = max(covid_count_data$hospital_rate)
+map_low = -1 *ceiling(hos_change)
+map_high = ceiling(hos_change)
+covid_count_data$hospital_rate_orig = covid_count_data$hospital_rate
+covid_count_data$hospital_rate = ifelse(covid_count_data$hospital_rate >= map_high, map_high, ifelse(covid_count_data$hospital_rate<= map_low, map_low, covid_count_data$hospital_rate))
+
+hos_value = colorNumeric(
+  palette = rev(cet_pal(15, name = "d3")),
+  domain = map_low:map_high
+)
+
+```
+
+## Including Plots
+
+
+```{r pressure, echo=FALSE}
+leaflet(data = covid_count_data) %>%
+  addTiles() %>%
+  setView(lng = -79.5, lat = 43.75, zoom = 9) %>%
+  addPolygons(color = 'white', weight = 1, dashArray = "3",
+              fill = TRUE, fillColor = ~hos_value(hospital_rate), fillOpacity = 0.5,
+              highlight = highlightOptions(weight = 4, color = '#666', fillOpacity = 0.5, bringToFront = TRUE),
+              popup = paste("FSA", covid_count_data$CFSAUID,"<br>", "Value", covid_count_data$hospital_rate,"<br>"),
+              label = ~as.character(hospital_rate_orig)
+              ) %>%
+  addLegend(pal = hos_value, values = ~hospital_rate, opacity = 0.8, title = 'Rate', position = 'bottomright')
+
+```
+
